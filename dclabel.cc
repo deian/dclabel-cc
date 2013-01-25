@@ -23,9 +23,11 @@ class Clause {
 public:
 	// Create clause form a set of principals
 	Clause(std::set<Principal>&);
-	// Create cluase form a list of principals; the list size is
+	// Create clause form a list of principals; the list size is
   // given by the second argument.
 	Clause(Principal[], size_t);
+	// Copy constructor
+	Clause(const Clause&);
 
 	// Set clause to supplied
 	void setTo(const std::set<Principal>&);
@@ -47,9 +49,6 @@ private:
 
 };
 
-void Clause::setTo(const std::set<Principal>& c) {
-	this->clause = c;
-}
 
 Clause::Clause(std::set<Principal>& c) {
 	clause = c;
@@ -58,6 +57,14 @@ Clause::Clause(std::set<Principal>& c) {
 Clause::Clause(Principal ps[], size_t len) {
 	std::set<Principal> c(ps,ps+len);
 	clause = c;
+}
+
+Clause::Clause(const Clause& c) {
+	clause = c.clause;
+}
+
+void Clause::setTo(const std::set<Principal>& c) {
+	this->clause = c;
 }
 
 // c1 ==> c2 iff
@@ -122,6 +129,8 @@ public:
 
 	// Default constructor to |False
 	Component();
+	// Copy constructor
+	Component(const Component&);
 	// Construct new component with value |False
 	static Component dcFalse();
 	// Construct new component with value |True
@@ -166,6 +175,10 @@ Component::Component() {
 	DCFalse = true;
 }
 
+Component::Component(const Component &c) {
+	DCFalse = c.DCFalse;
+	DCFormula = c.DCFormula;
+}
 
 inline Component Component::dcFalse() {
 	Component c;
@@ -321,9 +334,107 @@ void Component::setTo(const Component &c) {
 
 
 //
-//
+// Labels
 //
 
+class DCLabel {
+	
+	// Default constructor sets label to the public label
+	DCLabel();
+	// Constructor that sets the secrecy and integrity component
+	DCLabel(const Component&, const Component&);
+	// Copy constructor
+	DCLabel(const DCLabel&);
+
+	// Bottom of lattice
+	static DCLabel dcBottom();
+	// Top of lattice
+	static DCLabel dcTop();
+	// Public label
+	static DCLabel dcPub();
+
+	// Can flow to relation
+	bool canFlowTo(const DCLabel&) const;
+	static bool canFlowTo(const DCLabel&, const DCLabel&);
+	// Join, or least upper bound
+	void lub(const DCLabel&);
+	static DCLabel lub(const DCLabel&, const DCLabel&);
+	// Meet, or greatest lower bound
+	void glb(const DCLabel&);
+	static DCLabel glb(const DCLabel&, const DCLabel&);
+	
+private:
+	Component secrecy;
+	Component integrity;
+};
+
+DCLabel::DCLabel() {
+	secrecy = Component::dcTrue();
+	integrity = Component::dcTrue();
+}
+
+DCLabel::DCLabel(const Component& s, const Component& i) {
+	secrecy = s;
+	integrity = i;
+	secrecy.dcReduce();
+	integrity.dcReduce();
+}
+
+DCLabel::DCLabel(const DCLabel& l) {
+	secrecy = l.secrecy;
+	integrity = l.integrity;
+}
+
+inline DCLabel DCLabel::dcBottom() {
+	return DCLabel(Component::dcTrue(),Component::dcFalse());
+}
+
+inline DCLabel DCLabel::dcTop() {
+	return DCLabel(Component::dcFalse(),Component::dcTrue());
+}
+
+inline DCLabel DCLabel::dcPub() {
+	return DCLabel(Component::dcTrue(),Component::dcTrue());
+}
+
+bool DCLabel::canFlowTo(const DCLabel& that) const {
+	return that.secrecy.implies(this->secrecy)
+			&& this->integrity.implies(that.integrity);
+}
+
+inline bool DCLabel::canFlowTo(const DCLabel& l1, const DCLabel& l2) {
+	return l2.secrecy.implies(l1.secrecy) && l1.integrity.implies(l2.integrity);
+}
+
+void DCLabel::lub(const DCLabel& that) {
+	this->secrecy.dcAnd(that.secrecy);
+	this->integrity.dcOr(that.integrity);
+	this->secrecy.dcReduce();
+	this->integrity.dcReduce();
+}
+
+inline DCLabel DCLabel::lub(const DCLabel& l1, const DCLabel& l2) {
+	DCLabel l = l1;
+	l.lub(l2);
+  return l;
+}
+
+void DCLabel::glb(const DCLabel& that) {
+	this->secrecy.dcOr(that.secrecy);
+	this->integrity.dcAnd(that.integrity);
+	this->secrecy.dcReduce();
+	this->integrity.dcReduce();
+}
+
+inline DCLabel DCLabel::glb(const DCLabel& l1, const DCLabel& l2) {
+	DCLabel l = l1;
+	l.glb(l2);
+  return l;
+}
+
+//
+//
+//
 
 int main(void) {
 	Principal ps1[] = {"a","b", "c", "f"};
