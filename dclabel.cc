@@ -1,118 +1,80 @@
 #include <iostream>
 #include <set>
 #include <algorithm>
-
-//
-// Principals
-//
-
-// A principal is simply a string.
-typedef std::string Principal;
+#include "dclabel.h"
 
 //
 // Clauses
 //
+//
 
-// A clause is a set of principals.
-// Specifically, it encodes a disjunction of principals.
-class Clause {
-
-	friend class Component;
-	
-
-public:
-	// Create clause form a set of principals
-	Clause(std::set<Principal>&);
-	// Create clause form a list of principals; the list size is
-  // given by the second argument.
-	Clause(Principal[], size_t);
-	// Copy constructor
-	Clause(const Clause&);
-
-	// Set clause to supplied
-	void setTo(const std::set<Principal>&);
-	
-	bool implies(const Clause&) const;
-
-	friend bool operator<  (const Clause&, const Clause&);
-	friend bool operator<= (const Clause&, const Clause&);
-	friend bool operator>  (const Clause&, const Clause&);
-	friend bool operator>= (const Clause&, const Clause&);
-	friend bool operator== (const Clause&, const Clause&);
-	friend bool operator!= (const Clause&, const Clause&);
-
-	friend std::ostream& operator<< (std::ostream&, const Clause&);
-
-	
-private:
-	std::set<Principal> clause;
-
-};
-
+Clause::Clause() {
+  clause.clear();
+}
 
 Clause::Clause(std::set<Principal>& c) {
-	clause = c;
+  clause = c;
 }
 
 Clause::Clause(Principal ps[], size_t len) {
-	std::set<Principal> c(ps,ps+len);
-	clause = c;
+  std::set<Principal> c(ps,ps+len);
+  clause = c;
 }
 
 Clause::Clause(const Clause& c) {
-	clause = c.clause;
+  clause = c.clause;
 }
 
 void Clause::setTo(const std::set<Principal>& c) {
-	this->clause = c;
+  this->clause = c;
 }
 
 // c1 ==> c2 iff
 // c1 `isSubsetOf` c2
 bool Clause::implies(const Clause& that) const {
-	//that is subset of this:
-	return std::includes(that.clause.begin(), that.clause.end()
-										  ,this->clause.begin(), this->clause.end());
+  //that is subset of this:
+  return std::includes(that.clause.begin(), that.clause.end()
+  									  ,this->clause.begin(), this->clause.end());
 }
 
 bool operator< (const Clause& c1, const Clause& c2) {
-	return c1 <= c2 && c1 != c2;
+  return c1 <= c2 && c1 != c2;
 }
-	
+  
 bool operator<= (const Clause& c1, const Clause& c2) {
-	if(c1.clause.size() ==  c2.clause.size()) {
-		return c1.clause <= c2.clause;
-	} else {
-		return c1.clause.size() <  c2.clause.size();
-	}
+  if(c1.clause.size() ==  c2.clause.size()) {
+  	return c1.clause <= c2.clause;
+  } else {
+  	return c1.clause.size() <  c2.clause.size();
+  }
 }
 
 bool operator> (const Clause& c1, const Clause& c2) {
-	return !(c1 <= c2);
+  return !(c1 <= c2);
 }
-	
+  
 bool operator>= (const Clause& c1, const Clause& c2) {
-	return !(c1 <  c2);
+  return !(c1 <  c2);
 }
 
 bool operator== (const Clause& c1, const Clause& c2) {
-	return c1.clause == c2.clause;
+  return c1.clause == c2.clause;
 }
 
 bool operator!= (const Clause& c1, const Clause& c2) {
-	return c1.clause != c2.clause;
+  return c1.clause != c2.clause;
 }
 
 std::ostream& operator<< (std::ostream& o, const Clause& c) {
-	o << "[";
-	int flag = c.clause.size() - 1;
-	for( std::set<Principal>::iterator i = c.clause.begin()
-		 ; i != c.clause.end(); --flag, ++i ) {
-		o << *i;
-	  if(flag) { o << " \\/ "; }
-	}
-	o << "]";
-	return o;
+  o << "[";
+  int flag = c.clause.size() - 1;
+  for( std::set<Principal>::iterator i = c.clause.begin()
+  	 ; i != c.clause.end(); --flag, ++i ) {
+  	o << *i;
+    if(flag) { o << " \\/ "; }
+  }
+  o << "]";
+  return o;
 }
 
 //
@@ -120,411 +82,252 @@ std::ostream& operator<< (std::ostream& o, const Clause& c) {
 //
 
 
-// A component is either the value |False or a set of clauses.
-// The clauses are treated as conjunctions.
-// The default constructor sets the value to |False.
-class Component {
-
-public:
-
-	// Default constructor to |False
-	Component();
-	// Copy constructor
-	Component(const Component&);
-	// Construct new component with value |False
-	static Component dcFalse();
-	// Construct new component with value |True
-	static Component dcTrue();
-	// Construct new component with value of the provided singleton formula
-	static Component dcFormula(const Clause&);
-	// Construct new component with value of the provided formula
-	static Component dcFormula(const std::set<Clause>&);
-
-	// Does current component imply another
-	bool implies(const Component&) const;
-
-	// Perform conjunction with given component
-	void dcAnd(const Component&);
-	// Perform disjunction with given component
-	void dcOr(const Component&);
-	
-	// Reduce component
-	void dcReduce();
-	
-	// Is the component |False
-	bool isFalse() const;
-	// Is the component |True
-	bool isTrue() const;
-
-	friend std::ostream& operator<< (std::ostream&, const Component&);
-
-private:
-	bool DCFalse;
-	std::set<Clause> DCFormula; // empty set encodes |True
-
-	// Set componenet to |False
-	void setToDCFalse();
-	// Set componenet to |True
-	void setToDCTrue();
-	// Set componenet to the given one
-	void setTo(const Component &);
-		
-};
-
 Component::Component() {
-	DCFalse = true;
+  DCFalse = true;
 }
 
 Component::Component(const Component &c) {
-	DCFalse = c.DCFalse;
-	DCFormula = c.DCFormula;
+  DCFalse = c.DCFalse;
+  DCFormula = c.DCFormula;
 }
 
-inline Component Component::dcFalse() {
-	Component c;
-	c.setToDCFalse();
-	return c;
+Component Component::dcFalse() {
+  Component c;
+  c.setToDCFalse();
+  return c;
 }
 
-inline Component Component::dcTrue() {
-	Component c;
-	c.setToDCTrue();
-	return c;
+Component Component::dcTrue() {
+  Component c;
+  c.setToDCTrue();
+  return c;
 }
 
-inline Component Component::dcFormula(const Clause& clause) {
-	std::set<Clause> cs;
-	cs.insert(clause);
-	return dcFormula(cs);
+Component Component::dcFormula(const Clause& clause) {
+  std::set<Clause> cs;
+  cs.insert(clause);
+  return dcFormula(cs);
 }
 
-inline Component Component::dcFormula(const std::set<Clause>& f) {
-	Component c;
-	c.DCFalse = false;
-	c.DCFormula = f;
-	return c;
+Component Component::dcFormula(const std::set<Clause>& f) {
+  Component c;
+  c.DCFalse = false;
+  c.DCFormula = f;
+  return c;
+}
+
+bool operator== (const Component& c1, const Component& c2) {
+    return (c1.DCFalse == c2.DCFalse) && (c1.DCFormula == c2.DCFormula);
+}
+
+bool operator!= (const Component& c1, const Component& c2) {
+    return !(c1==c2);
 }
 
 bool Component::isFalse() const {
-	return DCFalse;
+  return DCFalse;
 }
 
 bool Component::isTrue() const {
-	return !DCFalse && DCFormula.empty();
+  return !DCFalse && DCFormula.empty();
 }
 
 bool Component::implies(const Component& that) const {
-	// special cases:
-	if( this->isFalse() ) { return true;  }
-	if( that.isFalse()  ) { return false; }
-	if( that.isTrue()   ) { return true;  }
-	if( this->isTrue()  ) { return false; }
-	
-	// for all clauses in that there must be at least one in
+  // special cases:
+  if( this->isFalse() ) { return true;  }
+  if( that.isFalse()  ) { return false; }
+  if( that.isTrue()   ) { return true;  }
+  if( this->isTrue()  ) { return false; }
+  
+  // for all clauses in that there must be at least one in
   // this that implies it.
-	for( std::set<Clause>::iterator cs2 = that.DCFormula.begin()
-		 ; cs2 != that.DCFormula.end(); cs2++) {
-	  bool flag = false;
-		for( std::set<Clause>::iterator cs1 = this->DCFormula.begin()
-			 ; cs1 != this->DCFormula.end(); cs1++) {
-			flag |= cs1->implies(*cs2);
-		}
-		if(!flag) return false;
-	}
-	return true;
+  for( std::set<Clause>::iterator cs2 = that.DCFormula.begin()
+  	 ; cs2 != that.DCFormula.end(); cs2++) {
+    bool flag = false;
+  	for( std::set<Clause>::iterator cs1 = this->DCFormula.begin()
+  		 ; cs1 != this->DCFormula.end(); cs1++) {
+  		flag |= cs1->implies(*cs2);
+  	}
+  	if(!flag) return false;
+  }
+  return true;
 }
 
 void Component::dcAnd(const Component& that) {
 
-	if( this->isFalse() || that.isFalse() ) { 
-		this->setToDCFalse();
-		return;
-	}
+  if( this->isFalse() || that.isFalse() ) { 
+  	this->setToDCFalse();
+  	return;
+  }
 
-	this->DCFormula.insert(that.DCFormula.begin(),that.DCFormula.end());
+  this->DCFormula.insert(that.DCFormula.begin(),that.DCFormula.end());
 }
 
 void Component::dcOr(const Component& that) {
 
-	if( this->isTrue() || that.isTrue() ) {
-		this->setToDCTrue();
-		return;
-	}
-	if( that.isFalse() ) {
-		return;
-	}
-	if( this->isFalse() ) {
-		this->setTo(that);
-		return;
-	}
-		
-	Component component = dcTrue();
-	
-	for( std::set<Clause>::iterator c1 = this->DCFormula.begin()
-		 ; c1 != this->DCFormula.end(); ++c1 ) {
+  if( this->isTrue() || that.isTrue() ) {
+  	this->setToDCTrue();
+  	return;
+  }
+  if( that.isFalse() ) {
+  	return;
+  }
+  if( this->isFalse() ) {
+  	this->setTo(that);
+  	return;
+  }
+  	
+  Component component = dcTrue();
+  
+  for( std::set<Clause>::iterator c1 = this->DCFormula.begin()
+  	 ; c1 != this->DCFormula.end(); ++c1 ) {
 
-		Clause c = *c1;
-		for( std::set<Clause>::iterator c2 = that.DCFormula.begin()
-			 ; c2 != that.DCFormula.end(); ++c2 ) {
+  	Clause c = *c1;
+  	for( std::set<Clause>::iterator c2 = that.DCFormula.begin()
+  		 ; c2 != that.DCFormula.end(); ++c2 ) {
 
-			c.clause.insert(c2->clause.begin(),c2->clause.end());
+  		c.clause.insert(c2->clause.begin(),c2->clause.end());
 
-		}
-		component.DCFormula.insert(c);
+  	}
+  	component.DCFormula.insert(c);
 
-	}
-	this->setTo(component);
+  }
+  this->setTo(component);
 }
 
 void Component::dcReduce() {
 
-	if ( this->isFalse() || this->isTrue() ) return;
+  if ( this->isFalse() || this->isTrue() ) return;
 
-	std::set<Clause> rmList;
+  std::set<Clause> rmList;
 
-	for( std::set<Clause>::iterator c1 = this->DCFormula.begin()
-		 ; c1 != this->DCFormula.end(); ++c1 ) {
+  for( std::set<Clause>::iterator c1 = this->DCFormula.begin()
+  	 ; c1 != this->DCFormula.end(); ++c1 ) {
 
-		for( std::set<Clause>::reverse_iterator c2 = this->DCFormula.rbegin()
-			 ; *c2 != *c1; ++c2 ) {
-			if(c1->implies(*c2)) {
-			  rmList.insert(*c2);
-			}
-		}
+  	for( std::set<Clause>::reverse_iterator c2 = this->DCFormula.rbegin()
+  		 ; *c2 != *c1; ++c2 ) {
+  		if(c1->implies(*c2)) {
+  		  rmList.insert(*c2);
+  		}
+  	}
 
-	}
-	for( std::set<Clause>::iterator r = rmList.begin() ; r != rmList.end(); ++r ) {
-		this->DCFormula.erase(*r);
-	}
+  }
+  for( std::set<Clause>::iterator r = rmList.begin() ; r != rmList.end(); ++r ) {
+  	this->DCFormula.erase(*r);
+  }
 }
 
 std::ostream& operator<< (std::ostream& o, const Component& c) {
-	if( c.isFalse() ) {
-		o << "|False";
-	} else if( c.isTrue() ) {
-		o << "|True";
-	} else {
-		o << "{";
-		std::set<Clause> s = c.DCFormula;
-		int flag = s.size() - 1;
-		for( std::set<Clause>::iterator i = s.begin()
-			 ; i != s.end(); ++i, flag-- ) {
-			o << *i;
-	    if(flag) { o << " /\\ "; }
-		}
-		o << "}";
-	}
-	return o;
+  if( c.isFalse() ) {
+  	o << "|False";
+  } else if( c.isTrue() ) {
+  	o << "|True";
+  } else {
+  	o << "{";
+  	std::set<Clause> s = c.DCFormula;
+  	int flag = s.size() - 1;
+  	for( std::set<Clause>::iterator i = s.begin()
+  		 ; i != s.end(); ++i, flag-- ) {
+  		o << *i;
+      if(flag) { o << " /\\ "; }
+  	}
+  	o << "}";
+  }
+  return o;
 }
 
 void Component::setToDCFalse() {
-	this->DCFalse = true;
-	this->DCFormula.clear();
+  this->DCFalse = true;
+  this->DCFormula.clear();
 }
 
 void Component::setToDCTrue() {
-	this->DCFalse = false;
-	this->DCFormula.clear();
+  this->DCFalse = false;
+  this->DCFormula.clear();
 }
 
 void Component::setTo(const Component &c) {
-	this->DCFalse = c.DCFalse;
-	this->DCFormula = c.DCFormula;
+  this->DCFalse = c.DCFalse;
+  this->DCFormula = c.DCFormula;
 }
-
 
 //
 // Labels
 //
 
-class DCLabel {
-	
-	// Default constructor sets label to the public label
-	DCLabel();
-	// Constructor that sets the secrecy and integrity component
-	DCLabel(const Component&, const Component&);
-	// Copy constructor
-	DCLabel(const DCLabel&);
-
-	// Bottom of lattice
-	static DCLabel dcBottom();
-	// Top of lattice
-	static DCLabel dcTop();
-	// Public label
-	static DCLabel dcPub();
-
-	// Can flow to relation
-	bool canFlowTo(const DCLabel&) const;
-	static bool canFlowTo(const DCLabel&, const DCLabel&);
-	// Join, or least upper bound
-	void lub(const DCLabel&);
-	static DCLabel lub(const DCLabel&, const DCLabel&);
-	// Meet, or greatest lower bound
-	void glb(const DCLabel&);
-	static DCLabel glb(const DCLabel&, const DCLabel&);
-	
-private:
-	Component secrecy;
-	Component integrity;
-};
-
 DCLabel::DCLabel() {
-	secrecy = Component::dcTrue();
-	integrity = Component::dcTrue();
+  secrecy = Component::dcTrue();
+  integrity = Component::dcTrue();
 }
 
 DCLabel::DCLabel(const Component& s, const Component& i) {
-	secrecy = s;
-	integrity = i;
-	secrecy.dcReduce();
-	integrity.dcReduce();
+  secrecy = s;
+  integrity = i;
+  secrecy.dcReduce();
+  integrity.dcReduce();
 }
 
 DCLabel::DCLabel(const DCLabel& l) {
-	secrecy = l.secrecy;
-	integrity = l.integrity;
+  secrecy = l.secrecy;
+  integrity = l.integrity;
 }
 
-inline DCLabel DCLabel::dcBottom() {
-	return DCLabel(Component::dcTrue(),Component::dcFalse());
+bool operator== (const DCLabel& l1, const DCLabel& l2) {
+  return l1.secrecy == l2.secrecy && l1.integrity == l2.integrity;
 }
 
-inline DCLabel DCLabel::dcTop() {
-	return DCLabel(Component::dcFalse(),Component::dcTrue());
+bool operator!= (const DCLabel& l1, const DCLabel& l2) {
+  return !(l1 == l2);
 }
 
-inline DCLabel DCLabel::dcPub() {
-	return DCLabel(Component::dcTrue(),Component::dcTrue());
+void DCLabel::dcReduce() {
+  this->secrecy.dcReduce();
+  this->integrity.dcReduce();
+}
+
+DCLabel DCLabel::dcBottom() {
+  return DCLabel(Component::dcTrue(),Component::dcFalse());
+}
+
+DCLabel DCLabel::dcTop() {
+  return DCLabel(Component::dcFalse(),Component::dcTrue());
+}
+
+DCLabel DCLabel::dcPub() {
+  return DCLabel(Component::dcTrue(),Component::dcTrue());
 }
 
 bool DCLabel::canFlowTo(const DCLabel& that) const {
-	return that.secrecy.implies(this->secrecy)
-			&& this->integrity.implies(that.integrity);
+  return that.secrecy.implies(this->secrecy)
+  		&& this->integrity.implies(that.integrity);
 }
 
-inline bool DCLabel::canFlowTo(const DCLabel& l1, const DCLabel& l2) {
-	return l2.secrecy.implies(l1.secrecy) && l1.integrity.implies(l2.integrity);
+bool DCLabel::canFlowTo(const DCLabel& l1, const DCLabel& l2) {
+  return l2.secrecy.implies(l1.secrecy) && l1.integrity.implies(l2.integrity);
 }
 
 void DCLabel::lub(const DCLabel& that) {
-	this->secrecy.dcAnd(that.secrecy);
-	this->integrity.dcOr(that.integrity);
-	this->secrecy.dcReduce();
-	this->integrity.dcReduce();
+  this->secrecy.dcAnd(that.secrecy);
+  this->integrity.dcOr(that.integrity);
+  this->secrecy.dcReduce();
+  this->integrity.dcReduce();
 }
 
-inline DCLabel DCLabel::lub(const DCLabel& l1, const DCLabel& l2) {
-	DCLabel l = l1;
-	l.lub(l2);
+DCLabel DCLabel::lub(const DCLabel& l1, const DCLabel& l2) {
+  DCLabel l = l1;
+  l.lub(l2);
   return l;
 }
 
 void DCLabel::glb(const DCLabel& that) {
-	this->secrecy.dcOr(that.secrecy);
-	this->integrity.dcAnd(that.integrity);
-	this->secrecy.dcReduce();
-	this->integrity.dcReduce();
+  this->secrecy.dcOr(that.secrecy);
+  this->integrity.dcAnd(that.integrity);
+  this->secrecy.dcReduce();
+  this->integrity.dcReduce();
 }
 
-inline DCLabel DCLabel::glb(const DCLabel& l1, const DCLabel& l2) {
-	DCLabel l = l1;
-	l.glb(l2);
+DCLabel DCLabel::glb(const DCLabel& l1, const DCLabel& l2) {
+  DCLabel l = l1;
+  l.glb(l2);
   return l;
-}
-
-//
-//
-//
-
-int main(void) {
-	Principal ps1[] = {"a","b", "c", "f"};
-	Principal ps2[] = {"g", "h"};
-	Principal ps3[] = {"a","b", "c", "f", "g", "h"};
-	Principal ps4[] = {"x","y", "z"};
-
-	Clause clause1(ps1, 4);
-	Clause clause2(ps2, 2);
-	Clause clause3(ps3, 6);
-	Clause clause4(ps4, 3);
-
-	std::set<Clause> c12;
-	c12.insert(clause1);
-	c12.insert(clause2);
-	
-	std::cout << clause1.implies(clause1) << std::endl;
-	std::cout << clause1.implies(clause2) << std::endl;
-	std::cout << clause1.implies(clause3) << std::endl;
-
-	std::cout << clause2.implies(clause1) << std::endl;
-	std::cout << clause2.implies(clause2) << std::endl;
-	std::cout << clause2.implies(clause3) << std::endl;
-
-	std::cout << clause3.implies(clause1) << std::endl;
-	std::cout << clause3.implies(clause2) << std::endl;
-	std::cout << clause3.implies(clause3) << std::endl;
-	
-	Component c1;
-	Component c2 = Component::dcTrue();
-	Component c3 = Component::dcFormula(clause1);
-	Component c4 = Component::dcFormula(c12);
-	Component c5 = Component::dcFormula(clause4);
-	
-	
-	std::cout << "c1: " << c1 << std::endl;
-	std::cout << "c2: " << c2 << std::endl;
-	std::cout << "c3: " << c3 << std::endl;
-	std::cout << "c4: " << c4 << std::endl;
-	std::cout << "c5: " << c5 << std::endl;
-
-	std::cout << c1.implies(c1) << std::endl;
-	std::cout << c1.implies(c2) << std::endl;
-	std::cout << c1.implies(c3) << std::endl;
-	std::cout << c1.implies(c4) << std::endl << std::endl;
-
-	std::cout << c2.implies(c1) << std::endl;
-	std::cout << c2.implies(c2) << std::endl;
-	std::cout << c2.implies(c3) << std::endl;
-	std::cout << c2.implies(c4) << std::endl << std::endl;
-
-	std::cout << c3.implies(c1) << std::endl;
-	std::cout << c3.implies(c2) << std::endl;
-	std::cout << c3.implies(c3) << std::endl;
-	std::cout << c3.implies(c4) << std::endl << std::endl;
-
-	std::cout << c4.implies(c1) << std::endl;
-	std::cout << c4.implies(c2) << std::endl;
-	std::cout << c4.implies(c3) << std::endl;
-	std::cout << c4.implies(c4) << std::endl << std::endl;
-
-
-	c4.dcOr(c5); std::cout << c4 << std::endl;
-	c3.dcOr(c5); std::cout << c3 << std::endl;
-	c1.dcOr(c4); std::cout << c1 << std::endl;
-	c2.dcOr(c4); std::cout << c2 << std::endl;
-
-	
-	{
-		Principal ps1[] = {"a","b"};
-		Principal ps2[] = {"a","b","c"};
-		Principal ps3[] = {"a","b","c","d"};
-		Principal ps4[] = {"a","q","c","d"};
-		Clause c1 = Clause(ps1,2);
-		Clause c2 = Clause(ps2,3);
-		Clause c3 = Clause(ps3,4);
-		Clause c4 = Clause(ps4,4);
-
-		std::set<Clause> c;
-	  c.insert(c1);
-	  c.insert(c2);
-	  c.insert(c3);
-	  c.insert(c4);
-		
-		Component cc = Component::dcFormula(c);
-		std::cout << "cc = " << cc << std::endl;
-		cc.dcReduce();
-		std::cout << "cc = " << cc << std::endl;
-	}
-
-
-	return 0;
 }

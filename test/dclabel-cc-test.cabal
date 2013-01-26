@@ -1,0 +1,27 @@
+Name:           dclabel-cc-test
+Version:        0.0.0.0
+Cabal-Version:  >= 1.8
+Build-type:     Simple
+License:        GPL
+License-File:   LICENSE
+Author:         Fule Injection team
+Maintainer:	Fuel Injection <fuel-injection at scs dot stanford dot edu>
+Synopsis:       DCLabel Test Suite
+Category:       Test
+Description:
+  Test generators for C++ DCLabels implementation
+
+
+Executable genTest
+  Main-is: genTest.hs
+
+  Build-depends:
+    base                       >= 4.5
+   ,containers                 >= 0.4.2
+   ,bytestring                 >= 0.9
+   ,directory                  >= 1.1
+   ,QuickCheck                 >= 2.3
+   ,lio                        == 0.9.*
+   ,quickcheck-instances       >= 0.3.0
+   ,quickcheck-lio-instances   == 0.9.*
+
